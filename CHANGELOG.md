@@ -88,3 +88,7 @@
  - Recipe to schedule initial downtime right after server provisioning
  - Moved host attributes from attributes file to .kitchen.yml file
  - Services are managed by attributes instead of recipe now.
+
+# 0.8.1
+
+ - README.md

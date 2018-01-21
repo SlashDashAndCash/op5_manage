@@ -3,9 +3,9 @@
 - Create, modify or remove hosts and services. Either from all your Chef nodes or from a single host.
 - Schedule down times for host objects.
 - Sophisticated caching is used to perform as less Api requests as possible.
+- Chef Vault support for securing op5 credentials.
 
-All operations are performed using the restful op5 Api
-https://www.op5.com/explore-op5-monitor/features/op5-monitor-api/
+All operations are performed using the [restful op5 Api](https://www.op5.com/explore-op5-monitor/features/op5-monitor-api/)
 
 ## Supported Platforms
 
@@ -13,6 +13,7 @@ https://www.op5.com/explore-op5-monitor/features/op5-monitor-api/
 - Red Hat Enterprise Linux 6, 7
 - SuSE Linux Enterprise Server 11, 12
 
+Other versions and platforms should work as well but are untested.
 
 ## Configuration
 
@@ -24,7 +25,8 @@ An endpoint is all the information to connect to an op5 Api server. All of them 
 
 #### Creating an endpoint vault
 
-On your Chef build environment write your credentials to a JSON file.
+On your Chef build environment write your credentials to a JSON file (e.g. ~/op5_endpoints.json).
+
 ```json
 {
   "op5_manage": {
@@ -44,9 +46,10 @@ On your Chef build environment write your credentials to a JSON file.
 
 Create the vault and import the data from file. The vault is named "op5_manage" and the item containing the credentials
 is named "endpoints".
+
 ```
 knife vault create op5_manage endpoints \
--A user1,user2 -S 'run_list:recipe\[op5_manage\:\:*\]'
+-A user1,user2 -S 'run_list:recipe\[op5_manage\:\:*\]' \
 -M client -J ~/op5_endpoints.json
 ```
 
@@ -58,34 +61,45 @@ knife vault edit op5_manage endpoints
 Configure attributes to use your vault instead of username and password. See attributes file default.rb for more
  information.
 
-#### Order of run list
-
-The op5_manage cookbook should be the last in run list.
 
 ## Usage
 
+### Order of run list
+
+The op5_manage cookbook should be the last in run list.
+
+
 ### Add a Chef node to op5 monitoring
 
-The node.rb recipe is used to manage the current node. This is the common use case so you just have to add the default
+The node.rb recipe is used to manage itself in op5. This is the common use case so you just have to add the default
  recipe to your run list. Without any configuration, host is created in op5 with a host group depending on your os.
- Use attributes to modify host parameters. Either in a recipe or in a role or environment (with JSON).
+
+```json
+{
+  "run_list": [
+    "recipe[op5_manage]"
+  ]
+}
+```
+
+Use attributes to modify host parameters. Either in a recipe or in a role or environment (with JSON).
 
 ```ruby
 default['op5_manage']['node'] = {
-    'hostgroups_add'    => [ 'hg_app_https_8443' ],
-    'custom_variable'   => {
-        '_API_PING_TXT' => 'OK',
-        '_API_PING_URL' => '/artifactory/api/system/ping'
-    },
-    'services' => {
-        'HTTPS URL API Ping' => {
-            'template'            => 'alarm-template_business_processes',
-            'check_command'       => 'check_https_url_string',
-            'check_command_args'  => '"$_API_PING_URL$"!"$_API_PING_TXT$"',
-            'notes_url'           => 'https://intranet.mydomain.tld/Monitoring#Checks-HTTPSURL',
-            'action_url'          => 'https://$HOSTADDRESS$$_API_PING_URL$'
-        }
+  'hostgroups_add'    => [ 'hg_app_https_8443' ],
+  'custom_variable'   => {
+    '_API_PING_TXT' => 'OK',
+    '_API_PING_URL' => '/artifactory/api/system/ping'
+  },
+  'services' => {
+    'HTTPS URL API Ping' => {
+      'template'            => 'alarm-template_business_processes',
+      'check_command'       => 'check_https_url_string',
+      'check_command_args'  => '"$_API_PING_URL$"!"$_API_PING_TXT$"',
+      'notes_url'           => 'https://intranet.mydomain.tld/Monitoring#Checks-HTTPSURL',
+      'action_url'          => 'https://$HOSTADDRESS$$_API_PING_URL$'
     }
+  }
 }
 ```
 
@@ -115,20 +129,137 @@ default['op5_manage']['node'] = {
 #### Host groups
 
 Typical host groups include
- - hg_app_https_8443
- - hg_middleware_tomcat_8080
- - hg_app_java
+
+- hg_app_https_8443
+- hg_middleware_tomcat_8080
+- hg_app_java
 
 All hostgroups are listed here:
+
 https://demo.op5.com/monitor/index.php/listview/?q=%5Bhostgroups%5D%20all
+
+
+### Manage other hosts from a Chef node
+
+The host recipe is used to manage hosts which are unable to run Chef like routers or printers. 
+
+```json
+{
+  "run_list": [
+    "recipe[op5_manage::host]"
+  ]
+}
+```
+
+Use attributes to `:create` or `:remove` hosts. Either in a recipe or in a role (with JSON).
+
+```ruby
+default['op5_manage']['hosts'] = {
+  'op5hostpip01-02.mydomain.tld' => {
+    'alias_name'    => 'op5hostpip01-02',
+    'address'       => '192.168.211.27',
+    'template'      => 'server_centos',
+    'hostgroups'    => [ 'hgt_linux_ssh', 'hg_app_port_443', 'hg_app_port_80' ],
+    'check_period'  => 'tp_class_a',
+    'retain_info'   => true
+  },
+  'op5hostpip01-03.mydomain.tld' => {
+    'alias_name'    => 'op5hostpip01-03',
+    'address'       => '192.168.211.21',
+    'template'      => 'server_centos',
+    'hostgroups'    => [ 'hgt_linux_ssh', 'hg_app_port_443' ],
+    'action'        => 'remove'
+  }
+}
+```
+
+```json
+{
+  "op5_manage": {
+    "hosts": {
+      "op5hostpip01-02.mydomain.tld": {
+        "alias_name": "op5hostpip01-02",
+        "address": "192.168.211.27",
+        "template": "server_centos",
+        "hostgroups": [ "hgt_linux_ssh", "hg_app_port_443", "hg_app_port_80" ],
+        "check_period": "tp_class_a",
+        "retain_info": true
+      },
+      "op5hostpip01-03.mydomain.tld": {
+        "alias_name": "op5hostpip01-03",
+        "address": "192.168.211.21",
+        "template": "server_centos",
+        "hostgroups": [ "hgt_linux_ssh", "hg_app_port_443" ],
+        "action": "remove"
+      }
+    }
+  }
+}
+```
+
+
+### Manage services of other hosts from a Chef node
+
+The service recipe is used to manage services on hosts which are unable to run Chef like routers or printers. 
+
+```json
+{
+  "run_list": [
+    "recipe[op5_manage::service]"
+  ]
+}
+```
+
+Use attributes to `:create` or `:remove` services. Either in a recipe or in a role (with JSON).
+
+```ruby
+default['op5_manage']['services'] = {
+  'op5hostpip01-03.mydomain.tld;Test service 04' => {
+    'check_command'    => 'check_ssh_5',
+    'template'       => 'default-service',
+    'display_name'      => 'Interval 15m - Notify 15m+2m'
+  },
+  'op5hostpip01-03.mydomain.tld;Test service 05' => {
+    'check_command'    => 'check_ssh_5',
+    'action'       => 'remove'
+  }
+}
+```
+
+```json
+{
+  "op5_manage": {
+    "services": {
+      "op5hostpip01-03.mydomain.tld;Test service 04": {
+        "check_command": "check_ssh_5",
+        "template": "default-service",
+        "display_name": "Interval 15m - Notify 15m+2m"
+      },
+      "op5hostpip01-03.mydomain.tld;Test service 05": {
+        "check_command": "check_ssh_5",
+        "action": "remove"
+      }
+    }
+  }
+}
+```
 
 
 ### Schedule host downtimes
 
-The host_downtime.rb schedules various kinds of host downtimes. Please refer to op5 Api documentation for details.
-https://demo.op5.com/api/help/command/SCHEDULE_HOST_DOWNTIME
-https://demo.op5.com/api/help/command/SCHEDULE_AND_PROPAGATE_HOST_DOWNTIME
-https://demo.op5.com/api/help/command/SCHEDULE_AND_PROPAGATE_TRIGGERED_HOST_DOWNTIME
+The host_downtime recipe schedules various kinds of host downtimes. Please refer to op5 Api documentation for details.
+
+- https://demo.op5.com/api/help/command/SCHEDULE_HOST_DOWNTIME
+- https://demo.op5.com/api/help/command/SCHEDULE_AND_PROPAGATE_HOST_DOWNTIME
+- https://demo.op5.com/api/help/command/SCHEDULE_AND_PROPAGATE_TRIGGERED_HOST_DOWNTIME
+
+```json
+{
+  "run_list": [
+    "recipe[op5_manage::host_downtime]"
+  ]
+}
+```
 
 Downtimes are defined by attributes.
 
@@ -185,8 +316,10 @@ knife exec -E "nodes.transform(:all) {|n| n.normal_attrs['op5_manage']['initial_
  avoid inconsistent state of hostname and node['fqdn'] after provisioning.
 - There is an open bug on caching host_downtimes. To work around you should never change the properties of
  an existing downtime. Also you must remove all downtimes in Chef before deleting the host on op5 server.
+- Be very careful with names. In fact names of hosts, services and downtimes should avoid any special character
+ expect space, dash and underscore.
 - If you are looking for an issue it's a good advice to rename the cache file (/var/lib/op5_manage/cache.json)
- or temporary disable caching (node['op5_manage']['cache']['enabled'])
+ or temporary disable caching (`node['op5_manage']['cache']['enabled']`)
 
 
 ## Attributes

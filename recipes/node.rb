@@ -82,6 +82,25 @@ op5_manage_host node['fqdn'] do
 end
 
 
+# Schedule initial downtime after host provisioning
+op5_manage_host_downtime "#{node['hostname']}_initial_downtime" do
+  host_name   node['fqdn']
+  start_time  Time.new.to_s
+  end_time    (Time.new + (node['op5_manage']['initial_downtime']['duration'] * 60 * 60)).to_s
+  comment     'Initial downtime after server provisioning (scheduled by Chef)'
+  only_if     { node['op5_manage']['initial_downtime']['enabled']   }
+  not_if      { node['op5_manage']['initial_downtime']['scheduled'] }
+  notifies    :run, 'ruby_block[initial_downtime_scheduled]', :immediate
+end
+
+ruby_block 'initial_downtime_scheduled' do
+  block do
+    node.normal['op5_manage']['initial_downtime']['scheduled'] = true
+  end
+  action :nothing
+end
+
+
 # Create extra services
 if node['op5_manage']['node'].has_key?('services')
   node['op5_manage']['node']['services'].each do |name, service|
@@ -132,23 +151,4 @@ if node['op5_manage']['node'].has_key?('services')
       action                        service['action']
     end
   end
-end
-
-
-# Schedule initial downtime after host provisioning
-op5_manage_host_downtime "#{node['hostname']}_initial_downtime" do
-  host_name   node['fqdn']
-  start_time  Time.new.to_s
-  end_time    (Time.new + (node['op5_manage']['initial_downtime']['duration'] * 60 * 60)).to_s
-  comment     'Initial downtime after server provisioning (scheduled by Chef)'
-  only_if     { node['op5_manage']['initial_downtime']['enabled']   }
-  not_if      { node['op5_manage']['initial_downtime']['scheduled'] }
-  notifies    :run, 'ruby_block[initial_downtime_scheduled]', :immediate
-end
-
-ruby_block 'initial_downtime_scheduled' do
-  block do
-    node.normal['op5_manage']['initial_downtime']['scheduled'] = true
-  end
-  action :nothing
 end
