@@ -1,0 +1,114 @@
+---
+driver_plugin: ### your driver here ###
+
+provisioner:
+  name: chef_zero
+  environments_path: 'test/integration/environments'
+  data_bag_dir: 'test/integration/data_bags'
+  client_rb:
+    # Change node_name at every run to work around attributes bug.
+    node_name: op5manage-test<%= Time.now.to_i %>.mydomain.tld
+    no_proxy: localhost,127.0.0.1,mnetchef02.mydomain.tld,scm.mydomain.tld,mnetchef04.mydomain.tld,supermarket.mydomain.tld,artifactory.m-net.de
+    environment: kitchen
+
+platforms:
+  ### your platforms here ###
+
+suites:
+  - name: op5-default-<%= ENV['USER'] %>
+    run_list:
+      - recipe[role_default]
+      - recipe[op5_manage]
+    attributes: {
+      "role_default": {
+        "fqdn": "op5hostpip01-01.mydomain.tld"
+      },
+      "op5_manage": {
+        "node": {
+          "services": {
+            "Test service 06": {
+              "check_command": "check_ssh_5",
+              "display_name": "Interval 15m - Notify 15m+2m"
+            }
+          }
+        }
+      }
+    }
+
+  - name: op5-host-<%= ENV['USER'] %>
+    run_list:
+      - recipe[op5_manage::host]
+      - recipe[op5_manage::service]
+      - recipe[op5_manage::host_downtime]
+    # node_name changes at every run to handle attributes bug (see above).
+    # Otherwise you would need to destroy and create vm again to change attributes.
+    # On the downside attributes set at run time are not persistent.
+    attributes: {
+      "op5_manage": {
+        "hosts": {
+          "op5hostpip01-02.mydomain.tld": {
+            "alias_name": "op5hostpip01-02",
+            "address": "192.168.211.27",
+            "template": "server_centos",
+            "hostgroups": [ "hgt_linux_ssh", "hg_app_port_443", "hg_app_port_80" ],
+            "check_period": "tp_class_a",
+            "retain_info": true
+          },
+          "op5hostpip01-03.mydomain.tld": {
+            "alias_name": "op5hostpip01-03",
+            "address": "192.168.211.21",
+            "template": "server_centos",
+            "hostgroups": [ "hgt_linux_ssh", "hg_app_port_443" ]
+          },
+          "op5hostpip01-04.mydomain.tld": {
+            "address": "192.168.211.22",
+            "alias_name": "op5hostpip01-04",
+            "template": "server_centos",
+            "hostgroups": [ "hgt_linux_ssh" ]
+          },
+          "op5hostpip01-05.mydomain.tld": {
+            "alias_name": "op5hostpip01-05",
+            "address": "192.168.211.23",
+            "template": "server_centos",
+            "hostgroups": [ "hgt_linux_ssh", "hg_app_port_443" ],
+            "check_period": "tp_class_a",
+            "contact_groups": [ "cg_applications_class_a" ],
+            "custom_variable": {
+                "_rhea_env": "dev",
+                "_rhea_version": "v1.43"
+            },
+            "action": "create"
+          }
+        },
+        "services": {
+          "op5hostpip01-03.mydomain.tld;Test service 01": {
+            "check_command": "check_ssh_5"
+          },
+          "op5hostpip01-03.mydomain.tld;Test service 03": {
+            "check_command": "check_ssh_5",
+            "action": "remove"
+          },
+          "op5hostpip01-03.mydomain.tld;Test service 04": {
+            "check_command": "check_ssh_5",
+            "template": "default-service",
+            "display_name": "Interval 15m - Notify 15m+2m"
+          },
+          "op5hostpip01-03.mydomain.tld;Test service 05": {
+            "check_command": "check_ssh_5",
+            "action": "create"
+          }
+        },
+        "host_downtimes": {
+          "maintenance_op5hostpip01-05.mydomain.tld": {
+            "command": "SCHEDULE_HOST_DOWNTIME",
+            "host_name": "op5hostpip01-05.mydomain.tld",
+            "start_time": "<%= Time.now.strftime("%d.%m.%Y %H:%M:%S") %>",
+            "end_time": "<%= (Time.now + 300).strftime("%d.%m.%Y %H:%M:%S") %>",
+            "fixed": true,
+            "duration": 0,
+            "trigger_id": 0,
+            "comment": "Maintenance downtime for op5hostpip01-05.mydomain.tld"
+          }
+        }
+      }
+    }
