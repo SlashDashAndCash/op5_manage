@@ -1,13 +1,13 @@
 name              'op5_manage'
 maintainer        'Jakob Pfeiffer'
 maintainer_email  'pgp-jkp@pfeiffer.ws'
-license           'Apache v2.0'
+license           'Apache-2.0'
 source_url        'https://github.com/SlashDashAndCash/op5_manage.git'
 issues_url        'https://github.com/SlashDashAndCash/op5_manage/issues'
 description       'Manage op5 hosts and services'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 
-version '0.8.2'
+version '0.8.3'
 
 # Weired release numbers for supermarket
 supports 'centos', '>= 6.0.0'

@@ -315,6 +315,8 @@ knife exec -E "nodes.transform(:all) {|n| n.normal_attrs['op5_manage']['initial_
  avoid inconsistent state of hostname and node['fqdn'] after provisioning.
 - There is an open bug on caching host_downtimes. To work around you should never change the properties of
  an existing downtime. Also you must remove all downtimes in Chef before deleting the host on op5 server.
+- Some times a downtime right after creating the host is not visible in op5 cluster. The only workaround I know is to
+ `sleep(30)` between host and downtime resource. Noted for further testing.
 - Be very careful with names. In fact names of hosts, services and downtimes should avoid any special character
  expect space, dash and underscore.
 - If you are looking for an issue it's a good advice to rename the cache file (/var/lib/op5_manage/cache.json)

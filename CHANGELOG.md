@@ -96,5 +96,9 @@
 # 0.8.2
 
 - Bugfix: merge cache file instead of overwriting 
-- Some findings of Foodcritic resolved
+- Some Foodcritic findings resolved
 - README.md
+
+# 0.8.3
+
+- Workaround: Wait 30 seconds between creating the host and schedule a downtime.

@@ -82,6 +82,16 @@ op5_manage_host node['fqdn'] do
 end
 
 
+# Some times a downtime right after creating the host is not visible in op5 cluster.
+# We will wait 30 seconds to work around.
+ruby_block 'wait_for_host' do
+  block do
+    sleep(30)
+  end
+  only_if     { node['op5_manage']['initial_downtime']['enabled']   }
+  not_if      { node['op5_manage']['initial_downtime']['scheduled'] }
+end
+
 # Schedule initial downtime after host provisioning
 op5_manage_host_downtime "#{node['hostname']}_initial_downtime" do
   host_name   node['fqdn']

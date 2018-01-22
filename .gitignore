@@ -13,3 +13,5 @@ bin/*
 
 .kitchen/
 .kitchen.local.yml
+
+clean-cb.sh
