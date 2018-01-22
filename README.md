@@ -1,8 +1,8 @@
 # op5_manage
 
 - Create, modify or remove hosts and services. Either from all your Chef nodes or from a single host.
-- Schedule down times for host objects.
-- Sophisticated caching is used to perform as less Api requests as possible.
+- Schedule downtimes for host objects.
+- Sophisticated caching to perform as less Api requests as possible.
 - Chef Vault support for securing op5 credentials.
 
 All operations are performed using the [restful op5 Api](https://www.op5.com/explore-op5-monitor/features/op5-monitor-api/)
@@ -20,12 +20,11 @@ Other versions and platforms should work as well but are untested.
 ### op5 endpoints
 
 An endpoint is all the information to connect to an op5 Api server. All of them are configured by attributes in the
- default.rb file. In addition sensitive credentials like username and password may stored in a Chef Vault. Only vaults
- of type client are supported.
+ default.rb attribute file. In addition sensitive credentials like username and password may stored in a Chef Vault.
 
 #### Creating an endpoint vault
 
-On your Chef build environment write your credentials to a JSON file (e.g. ~/op5_endpoints.json).
+On your Chef build environment write your credentials to a JSON file (e.g. `~/op5_endpoints.json`).
 
 ```json
 {
@@ -71,8 +70,8 @@ The op5_manage cookbook should be the last in run list.
 
 ### Add a Chef node to op5 monitoring
 
-The node.rb recipe is used to manage itself in op5. This is the common use case so you just have to add the default
- recipe to your run list. Without any configuration, host is created in op5 with a host group depending on your os.
+The node recipe is used to manage a node itself op5. This is the common use case so you just have to add the default
+ recipe to your run list. Without any configuration, a host is created in op5 with a host group depending on your os.
 
 ```json
 {
@@ -299,8 +298,8 @@ default['op5_manage']['host_downtimes'] = {
 
 ### Initial downtimes
 
-Initial downtime recipe can be used to schedule a host downtime for newly provisioned servers. To prevent recipe from
- scheduling downtimes for existing servers, you can run knife command to set attribute.
+Initial downtime is part of node recipe and can be used to schedule a host downtime for newly provisioned servers. To
+ prevent a recipe from scheduling downtimes for existing servers, you can run this knife command to set the attribute.
 
 ```
 knife exec -E "nodes.transform('name:dbsvrpip01-04.mydomain.tld') {|n| n.normal_attrs['op5_manage']['initial_downtime']['scheduled']=true  rescue nil }"

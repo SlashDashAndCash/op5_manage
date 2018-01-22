@@ -17,7 +17,6 @@ platforms:
 suites:
   - name: op5-default-<%= ENV['USER'] %>
     run_list:
-      - recipe[role_default]
       - recipe[op5_manage]
     attributes: {
       "role_default": {

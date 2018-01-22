@@ -73,7 +73,7 @@ class Op5Cache
         unless @endpoint['url'] == content['endpoint_url']
           File.delete(filename)
         else
-          @cache = content
+          @cache.merge!(content)
 
           # Remove expired downtimes from cache
           clean_host_downtime
