@@ -102,3 +102,8 @@
 # 0.8.3
 
 - Workaround: Wait 30 seconds between creating the host and schedule a downtime.
+
+# 0.8.4
+
+- New attribute for waiting after config change. This is a workaround to avoid performance issues.
+- README.md

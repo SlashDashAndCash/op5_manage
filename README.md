@@ -1,6 +1,6 @@
 # op5_manage
 
-- Create, modify or remove hosts and services. Either from all your Chef nodes or from a single host.
+- Create, modify or remove hosts and services.
 - Schedule downtimes for host objects.
 - Sophisticated caching to perform as less Api requests as possible.
 - Chef Vault support for securing op5 credentials.
@@ -19,12 +19,12 @@ Other versions and platforms should work as well but are untested.
 
 ### op5 endpoints
 
-An endpoint is all the information to connect to an op5 Api server. All of them are configured by attributes in the
+An endpoint is all the needed information to connect to an op5 Api server. All of them are configured by attributes in the
  default.rb attribute file. In addition sensitive credentials like username and password may stored in a Chef Vault.
 
 #### Creating an endpoint vault
 
-On your Chef build environment write your credentials to a JSON file (e.g. `~/op5_endpoints.json`).
+On your Chef build environment write your credentials in a JSON file (e.g. `~/op5_endpoints.json`).
 
 ```json
 {
@@ -48,17 +48,45 @@ is named "endpoints".
 
 ```
 knife vault create op5_manage endpoints \
--A user1,user2 -S 'run_list:recipe\[op5_manage\:\:*\]' \
+-A user1,user2 -S 'run_list:recipe\[op5_manage\] OR run_list:recipe\[op5_manage\:\:*\]' \
 -M client -J ~/op5_endpoints.json
 ```
 
 Changing the content of this vault item is easy.
+
 ```
 knife vault edit op5_manage endpoints
 ```
 
 Configure attributes to use your vault instead of username and password. See attributes file default.rb for more
  information.
+
+
+#### Configure the endpoint
+
+It's good practice to configure the endpoint url in your environments.
+
+```json
+{
+  "name": "prod",
+  "description": "Production Environment",
+  "cookbook_versions": {
+  },
+  "json_class": "Chef::Environment",
+  "chef_type": "environment",
+  "default_attributes": {
+    "op5_manage": {
+      "endpoint": {
+        "url": "https://server.domain.tld/api"
+      }
+    }
+  },
+  "override_attributes": {
+  }
+}
+```
+
+This will point the corresponding endpoint credentials in your vault item.
 
 
 ## Usage
@@ -70,7 +98,7 @@ The op5_manage cookbook should be the last in run list.
 
 ### Add a Chef node to op5 monitoring
 
-The node recipe is used to manage a node itself op5. This is the common use case so you just have to add the default
+The node recipe is used to manage a node itself in op5. This is the common use case so you just have to add the default
  recipe to your run list. Without any configuration, a host is created in op5 with a host group depending on your os.
 
 ```json
@@ -100,6 +128,8 @@ default['op5_manage']['node'] = {
     }
   }
 }
+
+include_recipe 'op5_manage'
 ```
 
 ```json
@@ -170,6 +200,8 @@ default['op5_manage']['hosts'] = {
     'action'        => 'remove'
   }
 }
+
+include_recipe 'op5_manage::host'
 ```
 
 ```json
@@ -223,6 +255,8 @@ default['op5_manage']['services'] = {
     'action'       => 'remove'
   }
 }
+
+include_recipe 'op5_manage::service'
 ```
 
 ```json
@@ -275,6 +309,8 @@ default['op5_manage']['host_downtimes'] = {
     'comment'     => 'Maintenance downtime for artiprod-21.mydomain.tld'
   }
 }
+
+include_recipe 'op5_manage::host_downtime'
 ```
 
 ```json
@@ -386,18 +422,24 @@ knife exec -E "nodes.transform(:all) {|n| n.normal_attrs['op5_manage']['initial_
     <td>Proxy authentication</td>
     <td>Not given</td>
   </tr>
-    <tr>
-      <td><tt>['endpoint_auth']['user']</tt></td>
-      <td>String</td>
-      <td>Username to access the API<br/>This may be overwriten by Chef Vault</td>
-      <td><tt>op5chef-test$LDAP</tt></td>
-    </tr>
-    <tr>
-      <td><tt>['endpoint_auth']['password']</tt></td>
-      <td>String</td>
-      <td>Password to access the API<br/>This may be overwriten by Chef Vault</td>
-      <td><tt>*********</tt></td>
-    </tr>
+  <tr>
+    <td><tt>['endpoint']['change_delay']</tt></td>
+    <td>Integer</td>
+    <td>Seconds to wait after a configuration change.</td>
+    <td>30</td>
+  </tr>
+  <tr>
+    <td><tt>['endpoint_auth']['user']</tt></td>
+    <td>String</td>
+    <td>Username to access the API<br/>This may be overwriten by Chef Vault</td>
+    <td><tt>op5chef-test$LDAP</tt></td>
+  </tr>
+  <tr>
+  <td><tt>['endpoint_auth']['password']</tt></td>
+    <td>String</td>
+    <td>Password to access the API<br/>This may be overwriten by Chef Vault</td>
+    <td><tt>*********</tt></td>
+  </tr>
   <tr>
     <td><tt>['op5_manage']['cache']['enabled']</tt></td>
     <td>Bool</td>

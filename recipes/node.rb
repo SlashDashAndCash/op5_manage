@@ -90,6 +90,7 @@ ruby_block 'wait_for_host' do
   end
   only_if     { node['op5_manage']['initial_downtime']['enabled']   }
   not_if      { node['op5_manage']['initial_downtime']['scheduled'] }
+  only_if     { node['op5_manage']['endpoint']['change_delay'] < 30 }
 end
 
 # Schedule initial downtime after host provisioning

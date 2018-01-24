@@ -20,13 +20,17 @@
 # proxy_port:   Proxy port number. Only used if proxy_addr is given. [Interger, nil]
 # proxy_user:   For proxy authentication. [String, nil]
 # proxy_pass:   For proxy authentication. [String, nil]
+# change_delay: Seconds to wait after a configuration change. [Integer]
+#               Set 0 to disable
+
 
 default['op5_manage']['endpoint'] = {
-    'url'         => 'https://op5.mydomain.tld/api',
-    'vault_name'  => :op5_manage,
-    'vault_item'  => 'endpoints',
-    'tls_verify'  => true,
-    'proxy_addr'  => nil
+    'url'          => 'https://op5.mydomain.tld/api',
+    'vault_name'   => :op5_manage,
+    'vault_item'   => 'endpoints',
+    'tls_verify'   => true,
+    'proxy_addr'   => nil,
+    'change_delay' => 30
 }
 
 node.run_state['endpoint_auth'] = {
