@@ -36,8 +36,8 @@ op5_manage_host node['fqdn'] do
   check_period			            host['check_period']
   children			                host['children']
 
-  contact_groups_all += host['contact_groups_add']      if host['contact_groups_add'].kind_of?(Array)
-  contact_groups_all -= host['contact_groups_remove']   if host['contact_groups_remove'].kind_of?(Array)
+  contact_groups_all += host['contact_groups_add'].to_a       if host.attribute?('contact_groups_add')
+  contact_groups_all -= host['contact_groups_remove'].to_a    if host.attribute?('contact_groups_remove')
   contact_groups                contact_groups_all.uniq.sort
 
   contacts			                host['contacts']
@@ -52,8 +52,8 @@ op5_manage_host node['fqdn'] do
   freshness_threshold			      host['freshness_threshold']
   high_flap_threshold			      host['high_flap_threshold']
 
-  hostgroups_all += host['hostgroups_add']      if host['hostgroups_add'].kind_of?(Array)
-  hostgroups_all -= host['hostgroups_remove']   if host['hostgroups_remove'].kind_of?(Array)
+  hostgroups_all += host['hostgroups_add'].to_a               if host.attribute?('hostgroups_add')
+  hostgroups_all -= host['hostgroups_remove'].to_a            if host.attribute?('hostgroups_remove')
   hostgroups                    hostgroups_all.uniq.sort
 
   icon_image			              host['icon_image']

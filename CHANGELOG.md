@@ -107,3 +107,7 @@
 
 - New attribute for waiting after config change. This is a workaround to avoid performance issues.
 - README.md
+
+# 0.8.5
+
+- Bugfix: hostgroups and contact_groups attributes in node recipe.
