@@ -28,9 +28,9 @@ attribute :check_command_args,            :kind_of => String, :default => nil
 attribute :check_freshness,               :kind_of => [ TrueClass, FalseClass ], :default => nil
 attribute :check_interval,                :kind_of => Integer, :default => nil
 attribute :check_period,                  :kind_of => String, :default => nil
-attribute :children,                      :kind_of => Array,  :default => nil
-attribute :contact_groups,                :kind_of => Array,  :default => nil
-attribute :contacts,                      :kind_of => Array,  :default => nil
+attribute :children,                      :kind_of => Hash,  :default => nil
+attribute :contact_groups,                :kind_of => Hash,  :default => nil
+attribute :contacts,                      :kind_of => Hash,  :default => nil
 attribute :custom_variable,               :kind_of => Hash,   :default => nil
 attribute :display_name,                  :kind_of => String, :default => nil
 attribute :event_handler,                 :kind_of => String, :default => nil
@@ -38,10 +38,10 @@ attribute :event_handler_args,            :kind_of => String, :default => nil
 attribute :event_handler_enabled,         :kind_of => [ TrueClass, FalseClass ], :default => nil
 attribute :first_notification_delay,      :kind_of => Integer, :default => nil
 attribute :flap_detection_enabled,        :kind_of => [ TrueClass, FalseClass ], :default => nil
-attribute :flap_detection_options,        :kind_of => Array,  :default => nil
+attribute :flap_detection_options,        :kind_of => Hash,  :default => nil
 attribute :freshness_threshold,           :kind_of => Integer, :default => nil
 attribute :high_flap_threshold,           :kind_of => Integer, :default => nil
-attribute :hostgroups,                    :kind_of => Array,  :default => nil
+attribute :hostgroups,                    :kind_of => Hash,  :default => nil
 attribute :icon_image,                    :kind_of => String, :default => nil
 attribute :icon_image_alt,                :kind_of => String, :default => nil
 attribute :low_flap_threshold,            :kind_of => Integer, :default => nil
@@ -49,18 +49,18 @@ attribute :max_check_attempts,            :kind_of => Integer, :default => nil
 attribute :notes,                         :kind_of => String, :default => nil
 attribute :notes_url,                     :kind_of => String, :default => nil
 attribute :notification_interval,         :kind_of => Integer, :default => nil
-attribute :notification_options,          :kind_of => Array,  :default => nil
+attribute :notification_options,          :kind_of => Hash,  :default => nil
 attribute :notification_period,           :kind_of => String, :default => nil
 attribute :notifications_enabled,         :kind_of => [ TrueClass, FalseClass ], :default => nil
 attribute :obsess,                        :kind_of => [ TrueClass, FalseClass ], :default => nil
-attribute :parents,                       :kind_of => Array,  :default => nil
+attribute :parents,                       :kind_of => Hash,  :default => nil
 attribute :passive_checks_enabled,        :kind_of => [ TrueClass, FalseClass ], :default => nil
 attribute :process_perf_data,             :kind_of => [ TrueClass, FalseClass ], :default => nil
 attribute :register,                      :kind_of => [ TrueClass, FalseClass ], :default => nil
 attribute :retain_nonstatus_information,  :kind_of => [ TrueClass, FalseClass ], :default => nil
 attribute :retain_status_information,     :kind_of => [ TrueClass, FalseClass ], :default => nil
 attribute :retry_interval,                :kind_of => Integer, :default => nil
-attribute :stalking_options,              :kind_of => Array,  :default => nil
+attribute :stalking_options,              :kind_of => Hash,  :default => nil
 attribute :statusmap_image,               :kind_of => String, :default => nil
 attribute :template,                      :kind_of => String, :required => true
 attribute :two_d_coords,                  :kind_of => String, :default => nil    # 2d_coords

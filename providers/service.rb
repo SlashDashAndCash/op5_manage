@@ -37,6 +37,7 @@ action :create do
     result = op5manage.create_service(service_config)
     if result
       Chef::Log.info "Sucessfully created service #{new_resource.name}"
+      node.run_state['config_changed'] = true
       new_resource.updated_by_last_action(true)
     else
       Chef::Log.error "Couldn't create service #{new_resource.name}"
@@ -50,6 +51,7 @@ action :create do
       result = op5manage.update_service(service_config)
       if result
         Chef::Log.info "Sucessfully updated service #{new_resource.name}"
+        node.run_state['config_changed'] = true
         new_resource.updated_by_last_action(true)
       else
         Chef::Log.error "Couldn't update service #{new_resource.name}"
@@ -76,6 +78,7 @@ action :remove do
     result = op5manage.remove_service(new_resource.name)
     if result
       Chef::Log.info "Sucessfully removed service #{new_resource}"
+      node.run_state['config_changed'] = true
       new_resource.updated_by_last_action(true)
     else
       Chef::Log.error "Couldn't remove service #{new_resource}"
@@ -97,15 +100,15 @@ def create_service_config
   service_config['check_freshness']                = new_resource.check_freshness              unless new_resource.check_freshness.nil?
   service_config['check_interval']                 = new_resource.check_interval               unless new_resource.check_interval.nil?
   service_config['check_period']                   = new_resource.check_period                 unless new_resource.check_period.nil?
-  service_config['contact_groups']                 = new_resource.contact_groups               unless new_resource.contact_groups.nil?
-  service_config['contacts']                       = new_resource.contacts                     unless new_resource.contacts.nil?
+  service_config['contact_groups']                 = new_resource.contact_groups.select{|key, flag| flag == true }.keys               unless new_resource.contact_groups.nil?
+  service_config['contacts']                       = new_resource.contacts.select{|key, flag| flag == true }.keys                     unless new_resource.contacts.nil?
   service_config['display_name']                   = new_resource.display_name                 unless new_resource.display_name.nil?
   service_config['event_handler']                  = new_resource.event_handler                unless new_resource.event_handler.nil?
   service_config['event_handler_args']             = new_resource.event_handler_args           unless new_resource.event_handler_args.nil?
   service_config['event_handler_enabled']          = new_resource.event_handler_enabled        unless new_resource.event_handler_enabled.nil?
   service_config['first_notification_delay']       = new_resource.first_notification_delay     unless new_resource.first_notification_delay.nil?
   service_config['flap_detection_enabled']         = new_resource.flap_detection_enabled       unless new_resource.flap_detection_enabled.nil?
-  service_config['flap_detection_options']         = new_resource.flap_detection_options       unless new_resource.flap_detection_options.nil?
+  service_config['flap_detection_options']         = new_resource.flap_detection_options.select{|key, flag| flag == true }.keys       unless new_resource.flap_detection_options.nil?
   service_config['freshness_threshold']            = new_resource.freshness_threshold          unless new_resource.freshness_threshold.nil?
   service_config['high_flap_threshold']            = new_resource.high_flap_threshold          unless new_resource.high_flap_threshold.nil?
   #Hostgroups are unsupported yet
@@ -118,7 +121,7 @@ def create_service_config
   service_config['notes']                          = new_resource.notes                        unless new_resource.notes.nil?
   service_config['notes_url']                      = new_resource.notes_url                    unless new_resource.notes_url.nil?
   service_config['notification_interval']          = new_resource.notification_interval        unless new_resource.notification_interval.nil?
-  service_config['notification_options']           = new_resource.notification_options         unless new_resource.notification_options.nil?
+  service_config['notification_options']           = new_resource.notification_options.select{|key, flag| flag == true }.keys         unless new_resource.notification_options.nil?
   service_config['notification_period']            = new_resource.notification_period          unless new_resource.notification_period.nil?
   service_config['notifications_enabled']          = new_resource.notifications_enabled        unless new_resource.notifications_enabled.nil?
   service_config['obsess']                         = new_resource.obsess                       unless new_resource.obsess.nil?
@@ -129,9 +132,9 @@ def create_service_config
   service_config['retain_nonstatus_information']   = new_resource.retain_nonstatus_information unless new_resource.retain_nonstatus_information.nil?
   service_config['retain_status_information']      = new_resource.retain_status_information    unless new_resource.retain_status_information.nil?
   service_config['retry_interval']                 = new_resource.retry_interval               unless new_resource.retry_interval.nil?
-  service_config['servicegroups']                  = new_resource.servicegroups                unless new_resource.servicegroups.nil?
+  service_config['servicegroups']                  = new_resource.servicegroups.select{|key, flag| flag == true }.keys                unless new_resource.servicegroups.nil?
   service_config['service_description']            = new_resource.name.split(';')[-1]
-  service_config['stalking_options']               = new_resource.stalking_options             unless new_resource.stalking_options.nil?
+  service_config['stalking_options']               = new_resource.stalking_options.select{|key, flag| flag == true }.keys             unless new_resource.stalking_options.nil?
   service_config['template']                       = new_resource.template                     unless new_resource.template.nil?
 
   return service_config

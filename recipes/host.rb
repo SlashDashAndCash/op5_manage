@@ -4,6 +4,12 @@
 
 include_recipe 'op5_manage::vault_handler'
 
+
+op5_manage_change 'config' do
+  action :initiate
+end
+
+
 node['op5_manage']['hosts'].each do |name, host|
   op5_manage_host name do
     action_url                      host[:action_url]                     if host.has_key?('action_url')
@@ -55,4 +61,8 @@ node['op5_manage']['hosts'].each do |name, host|
     two_d_coords                    host[:two_d_coords]                   if host.has_key?('two_d_coords')
     action                          host[:action]                         if host.has_key?('action')
   end
+end
+
+op5_manage_change 'config' do
+  action :save
 end

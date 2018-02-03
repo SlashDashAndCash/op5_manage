@@ -4,6 +4,12 @@
 
 include_recipe 'op5_manage::vault_handler'
 
+
+op5_manage_change 'config' do
+  action :initiate
+end
+
+
 node['op5_manage']['services'].each do |name, service|
   op5_manage_service name do
     action_url                      service[:action_url]                      if service.has_key?('action_url')
@@ -51,4 +57,9 @@ node['op5_manage']['services'].each do |name, service|
 
     action                          service[:action]                          if service.has_key?('action')
   end
+end
+
+
+op5_manage_change 'config' do
+  action :save
 end

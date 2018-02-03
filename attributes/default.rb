@@ -30,7 +30,7 @@ default['op5_manage']['endpoint'] = {
     'vault_item'   => 'endpoints',
     'tls_verify'   => true,
     'proxy_addr'   => nil,
-    'change_delay' => 30
+    'change_delay' => 0
 }
 
 node.run_state['endpoint_auth'] = {

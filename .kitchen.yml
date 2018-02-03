@@ -8,7 +8,7 @@ provisioner:
   client_rb:
     # Change node_name at every run to work around attributes bug.
     node_name: op5manage-test<%= Time.now.to_i %>.mydomain.tld
-    no_proxy: localhost,127.0.0.1,mnetchef02.mydomain.tld,scm.mydomain.tld,mnetchef04.mydomain.tld,supermarket.mydomain.tld,artifactory.m-net.de
+    no_proxy: localhost,127.0.0.1
     environment: kitchen
 
 platforms:
@@ -20,7 +20,7 @@ suites:
       - recipe[op5_manage]
     attributes: {
       "role_default": {
-        "fqdn": "op5hostpip01-01.mydomain.tld"
+        "fqdn": "op5cheftest-01.mydomain.tld"
       },
       "op5_manage": {
         "node": {
@@ -34,8 +34,9 @@ suites:
       }
     }
 
-  - name: op5-host-<%= ENV['USER'] %>
+  - name: op5_manage-<%= ENV['USER'] %>
     run_list:
+      - recipe[op5_manage]
       - recipe[op5_manage::host]
       - recipe[op5_manage::service]
       - recipe[op5_manage::host_downtime]
@@ -43,70 +44,113 @@ suites:
     # Otherwise you would need to destroy and create vm again to change attributes.
     # On the downside attributes set at run time are not persistent.
     attributes: {
+      "role_default": {
+        "fqdn": "op5cheftest-01.mydomain.tld"
+      },
       "op5_manage": {
+        "node": {
+          "hostgroups": {
+            "DNS servers": true,
+            "Web servers https": true,
+            "Linux servers": true
+          },
+          "services": {
+            "Test service 06": {
+              "check_command": "check_ssh_5",
+              "display_name": "Interval 15m - Notify 15m+2m",
+              "action": "create"
+            }
+          },
+          "action": "create"
+        },
         "hosts": {
-          "op5hostpip01-02.mydomain.tld": {
-            "alias_name": "op5hostpip01-02",
+          "op5cheftest-02.mydomain.tld": {
+            "alias_name": "op5cheftest-02",
             "address": "192.168.211.27",
-            "template": "server_centos",
-            "hostgroups": [ "hgt_linux_ssh", "hg_app_port_443", "hg_app_port_80" ],
-            "check_period": "tp_class_a",
-            "retain_info": true
+            "template": "default-host-template",
+            "hostgroups": {
+              "Linux servers": false,
+              "Web servers https": true,
+              "Web servers": true
+            },
+            "check_period": "none",
+            "retain_info": true,
+            "action": "create"
           },
-          "op5hostpip01-03.mydomain.tld": {
-            "alias_name": "op5hostpip01-03",
+          "op5cheftest-03.mydomain.tld": {
+            "alias_name": "op5cheftest-03",
             "address": "192.168.211.21",
-            "template": "server_centos",
-            "hostgroups": [ "hgt_linux_ssh", "hg_app_port_443" ]
+            "template": "default-host-template",
+            "hostgroups": {
+              "Linux servers": true,
+              "Web servers https": true
+            },
+            "action": "create"
           },
-          "op5hostpip01-04.mydomain.tld": {
+          "op5cheftest-04.mydomain.tld": {
             "address": "192.168.211.22",
-            "alias_name": "op5hostpip01-04",
-            "template": "server_centos",
-            "hostgroups": [ "hgt_linux_ssh" ]
+            "alias_name": "op5cheftest-04",
+            "template": "default-host-template",
+            "hostgroups": {
+              "Linux servers": true
+            },
+            "action": "create"
           },
-          "op5hostpip01-05.mydomain.tld": {
-            "alias_name": "op5hostpip01-05",
+          "op5cheftest-05.mydomain.tld": {
+            "alias_name": "op5cheftest-05",
             "address": "192.168.211.23",
-            "template": "server_centos",
-            "hostgroups": [ "hgt_linux_ssh", "hg_app_port_443" ],
-            "check_period": "tp_class_a",
-            "contact_groups": [ "cg_applications_class_a" ],
+            "template": "default-host-template",
+            "hostgroups": {
+              "Linux servers": false,
+              "Web servers https": false
+            },
+            "check_period": "workhours",
+            "contact_groups": {
+              "support-group": true
+            },
             "custom_variable": {
-                "_rhea_env": "dev",
-                "_rhea_version": "v1.43"
+                "_myapp_env": "dev",
+                "_myapp_version": "v1.43"
             },
             "action": "create"
           }
         },
         "services": {
-          "op5hostpip01-03.mydomain.tld;Test service 01": {
-            "check_command": "check_ssh_5"
-          },
-          "op5hostpip01-03.mydomain.tld;Test service 03": {
+          "op5cheftest-03.mydomain.tld;Test service 01": {
             "check_command": "check_ssh_5",
-            "action": "remove"
+            "action": "create"
           },
-          "op5hostpip01-03.mydomain.tld;Test service 04": {
+          "op5cheftest-03.mydomain.tld;Test service 03": {
+            "check_command": "check_ssh_5",
+            "contacts": {
+              "admin": true
+            },
+            "contact_groups": {
+              "support-group": false
+            },
+            "action": "create"
+          },
+          "op5cheftest-04.mydomain.tld;Test service 04": {
             "check_command": "check_ssh_5",
             "template": "default-service",
-            "display_name": "Interval 15m - Notify 15m+2m"
+            "display_name": "Interval 15m - Notify 15m+2m",
+            "action": "create"
           },
-          "op5hostpip01-03.mydomain.tld;Test service 05": {
+          "op5cheftest-04.mydomain.tld;Test service 05": {
             "check_command": "check_ssh_5",
             "action": "create"
           }
         },
         "host_downtimes": {
-          "maintenance_op5hostpip01-05.mydomain.tld": {
+          "maintenance_op5cheftest-05.mydomain.tld": {
             "command": "SCHEDULE_HOST_DOWNTIME",
-            "host_name": "op5hostpip01-05.mydomain.tld",
+            "host_name": "op5cheftest-05.mydomain.tld",
             "start_time": "<%= Time.now.strftime("%d.%m.%Y %H:%M:%S") %>",
             "end_time": "<%= (Time.now + 300).strftime("%d.%m.%Y %H:%M:%S") %>",
             "fixed": true,
             "duration": 0,
             "trigger_id": 0,
-            "comment": "Maintenance downtime for op5hostpip01-05.mydomain.tld"
+            "comment": "Maintenance downtime for op5cheftest-05.mydomain.tld"
           }
         }
       }

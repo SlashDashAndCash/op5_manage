@@ -5,25 +5,27 @@
 include_recipe 'op5_manage::vault_handler'
 
 
+# Set platform depending template and hostgroups.
+# Hostgroups defined by user have the higher precedence.
+if node['op5_manage']['node'].attribute?(node['platform'])
+  node.default['op5_manage']['node']['template']    = node['op5_manage']['node'][node['platform']]['template']
+  node.default['op5_manage']['node']['hostgroups']  = node['op5_manage']['node'][node['platform']]['hostgroups']
+  node.default['op5_manage']['node']['hostgroups'].merge!( node['op5_manage']['node']['hostgroups'] )
+else
+  message  = "No settings for platform \"#{node['platform']}\" found. Please provide attributes like:\n"
+  message += "{ \"op5_manage\": { \"node\": { \"#{node['platform']}\": { \"template\": \"mytemplate\", \"hostgroups\": [ \"myhostgroup\" ] } } } }"
+  raise message
+end
+
+
+op5_manage_change 'config' do
+  action :initiate
+end
+
+
 host = node['op5_manage']['node']
 
-hostgroups_all        = []
-contact_groups_all    = []
-
-
 op5_manage_host node['fqdn'] do
-
-  case node['platform']
-    when 'centos'
-      template                  'server_centos'
-      hostgroups_all       += %w(hgt_linux_ssh)
-    when 'redhat'
-      template                  'server_redhat'
-      hostgroups_all       += %w(hgt_linux_ssh)
-    when 'suse'
-      template                  'server_sles'
-      hostgroups_all       += %w(hgt_linux_ssh)
-  end
 
   action_url			              host['action_url']
   active_checks_enabled			    host['active_checks_enabled']
@@ -35,11 +37,7 @@ op5_manage_host node['fqdn'] do
   check_interval			          host['check_interval']
   check_period			            host['check_period']
   children			                host['children']
-
-  contact_groups_all += host['contact_groups_add'].to_a       if host.attribute?('contact_groups_add')
-  contact_groups_all -= host['contact_groups_remove'].to_a    if host.attribute?('contact_groups_remove')
-  contact_groups                contact_groups_all.uniq.sort
-
+  contact_groups                host['contact_groups']
   contacts			                host['contacts']
   custom_variable			          host['custom_variable']
   display_name			            host['display_name']
@@ -51,11 +49,7 @@ op5_manage_host node['fqdn'] do
   flap_detection_options			  host['flap_detection_options']
   freshness_threshold			      host['freshness_threshold']
   high_flap_threshold			      host['high_flap_threshold']
-
-  hostgroups_all += host['hostgroups_add'].to_a               if host.attribute?('hostgroups_add')
-  hostgroups_all -= host['hostgroups_remove'].to_a            if host.attribute?('hostgroups_remove')
-  hostgroups                    hostgroups_all.uniq.sort
-
+  hostgroups                    host['hostgroups']
   icon_image			              host['icon_image']
   icon_image_alt			          host['icon_image_alt']
   low_flap_threshold			      host['low_flap_threshold']
@@ -76,40 +70,12 @@ op5_manage_host node['fqdn'] do
   retry_interval			          host['retry_interval']
   stalking_options			        host['stalking_options']
   statusmap_image			          host['statusmap_image']
+  template                      host['template']
   two_d_coords			            host['two_d_coords']  # 2d_coords
 
   action                        host['action']
 end
 
-
-# Some times a downtime right after creating the host is not visible in op5 cluster.
-# We will wait 30 seconds to work around.
-ruby_block 'wait_for_host' do
-  block do
-    sleep(30)
-  end
-  only_if     { node['op5_manage']['initial_downtime']['enabled']   }
-  not_if      { node['op5_manage']['initial_downtime']['scheduled'] }
-  only_if     { node['op5_manage']['endpoint']['change_delay'] < 30 }
-end
-
-# Schedule initial downtime after host provisioning
-op5_manage_host_downtime "#{node['hostname']}_initial_downtime" do
-  host_name   node['fqdn']
-  start_time  Time.new.to_s
-  end_time    (Time.new + (node['op5_manage']['initial_downtime']['duration'] * 60 * 60)).to_s
-  comment     'Initial downtime after server provisioning (scheduled by Chef)'
-  only_if     { node['op5_manage']['initial_downtime']['enabled']   }
-  not_if      { node['op5_manage']['initial_downtime']['scheduled'] }
-  notifies    :run, 'ruby_block[initial_downtime_scheduled]', :immediate
-end
-
-ruby_block 'initial_downtime_scheduled' do
-  block do
-    node.normal['op5_manage']['initial_downtime']['scheduled'] = true
-  end
-  action :nothing
-end
 
 
 # Create extra services
@@ -162,4 +128,41 @@ if node['op5_manage']['node'].has_key?('services')
       action                        service['action']
     end
   end
+end
+
+
+op5_manage_change 'config' do
+  action :save
+end
+
+
+# Some times a downtime right after creating the host is not visible in op5 cluster.
+# We will wait 30 seconds to work around.
+ruby_block 'wait_for_host' do
+  block do
+    sleep(30)
+  end
+  only_if     { node['op5_manage']['node']['action'].to_s == 'create'       }
+  only_if     { node['op5_manage']['node']['initial_downtime']['enabled']   }
+  not_if      { node['op5_manage']['node']['initial_downtime']['scheduled'] }
+  only_if     { node['op5_manage']['endpoint']['change_delay'] < 30         }
+end
+
+# Schedule initial downtime after host provisioning
+op5_manage_host_downtime "#{node['hostname']}_initial_downtime" do
+  host_name   node['fqdn']
+  start_time  Time.new.to_s
+  end_time    (Time.new + (node['op5_manage']['node']['initial_downtime']['duration'] * 60 * 60)).to_s
+  comment     'Initial downtime after server provisioning (scheduled by Chef)'
+  only_if     { node['op5_manage']['node']['action'].to_s == 'create'       }
+  only_if     { node['op5_manage']['node']['initial_downtime']['enabled']   }
+  not_if      { node['op5_manage']['node']['initial_downtime']['scheduled'] }
+  notifies    :run, 'ruby_block[initial_downtime_scheduled]', :immediate
+end
+
+ruby_block 'initial_downtime_scheduled' do
+  block do
+    node.normal['op5_manage']['node']['initial_downtime']['scheduled'] = true
+  end
+  action :nothing
 end

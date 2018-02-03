@@ -33,8 +33,6 @@ class Op5Api
 
     uri = URI.parse(@endpoint['url'])
 
-    @endpoint['change_delay'] = 0 unless @endpoint.has_key?('write_delay')
-
     @endpoint['proxy_addr']  = :ENV unless @endpoint.has_key?('proxy_addr')
     @endpoint['proxy_port']  = nil unless @endpoint.has_key?('proxy_port')
     @endpoint['proxy_user']  = nil unless @endpoint.has_key?('proxy_user')
@@ -357,11 +355,6 @@ class Op5Api
     request = Net::HTTP::Post.new(uri.path)
     request.basic_auth(@endpoint_auth['user'], @endpoint_auth['password'])
     response = @http.request(request)
-
-    # Workaround to avoid performance issues
-    sleep(@endpoint['change_delay'])
-
-    return response
   end
 
 end

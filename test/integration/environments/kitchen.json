@@ -1,3 +1,12 @@
 {
-  "name": "kitchen"
+  "name": "kitchen",
+  "description": "Test Kitchen environment",
+  "cookbook_versions": {
+  },
+  "json_class": "Chef::Environment",
+  "chef_type": "environment",
+  "default_attributes": {
+  },
+  "override_attributes": {
+  }
 }

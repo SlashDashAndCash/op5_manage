@@ -108,6 +108,15 @@
 - New attribute for waiting after config change. This is a workaround to avoid performance issues.
 - README.md
 
-# 0.8.5
+# 0.9.0
 
-- Bugfix: hostgroups and contact_groups attributes in node recipe.
+- Stateful caching of config change operations. Huge performance improvement.
+- Platform depending template and hostgroups in node recipe can be modified by attributes now.
+- Default duration for initial downtime from two weeks to 24 hours.
+- Bugfix: When removing a host, also remove it's services from cache.
+
+# 1.0.0
+
+- Replaced array properties by hashes in all resources.
+- Moved initial_downtime attribute into node\['op5_manage'\]\['node'\].
+- Bugfix: don't schedule initial downtime if node was removed.

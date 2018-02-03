@@ -23,6 +23,11 @@ class Op5Manage
     @cache = Op5Cache.new(endpoint, cache_settings)
   end
 
+  def finish
+    @api.finish
+  end
+
+
 
   # -------------------------------
   # Commands
@@ -91,7 +96,7 @@ class Op5Manage
           service = hostname + ';' + service_config['service_description']
           service_config['host_name'] = hostname
 
-          if @cache.service_created?(service)
+          if @cache.service_in_cache?(service)
             @cache.update_service_config(service_config)
           else
             @cache.create_service(service_config)
@@ -112,13 +117,8 @@ class Op5Manage
     response = @api.post_config_host(host_config)
 
     if response.code.to_i == 201
-      response = @api.post_config_change
-      if response.code.to_i == 200
-        @cache.create_host(host_config)
-        return true
-      else
-        raise RuntimeError, "Couldn't save configuration\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
-      end
+      @cache.create_host(host_config)
+      return true
     else
       raise RuntimeError, "Couldn't create host\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
     end
@@ -130,13 +130,8 @@ class Op5Manage
     response = @api.patch_config_host(host_config['host_name'], host_config)
 
     if response.code.to_i == 200
-      response = @api.post_config_change
-      if response.code.to_i == 200 or response.body.to_s.include?('nothing to do')
-        @cache.update_host_config(host_config)
-        return true
-      else
-        raise RuntimeError, "Couldn't save configuration\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
-      end
+      @cache.update_host_config(host_config)
+      return true
     else
       raise RuntimeError, "Couldn't update host\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
     end
@@ -148,13 +143,8 @@ class Op5Manage
     response = @api.delete_config_host(hostname)
 
     if response.code.to_i == 200
-      response = @api.post_config_change
-      if response.code.to_i == 200
-        @cache.remove_host(hostname)
-        return true
-      else
-        raise RuntimeError, "Couldn't save configuration\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
-      end
+      @cache.remove_host(hostname)
+      return true
     else
       raise RuntimeError, "Couldn't remove host\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
     end
@@ -255,13 +245,8 @@ class Op5Manage
     response = @api.post_config_service(service_config)
 
     if response.code.to_i == 201
-      response = @api.post_config_change
-      if response.code.to_i == 200
-        @cache.create_service(service_config)
-        return true
-      else
-        raise RuntimeError, "Couldn't save configuration\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
-      end
+      @cache.create_service(service_config)
+      return true
     else
       raise RuntimeError, "Couldn't create service\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
     end
@@ -273,13 +258,8 @@ class Op5Manage
     response = @api.patch_config_service("#{service_config['host_name']};#{service_config['service_description']}", service_config)
 
     if response.code.to_i == 200
-      response = @api.post_config_change
-      if response.code.to_i == 200 or response.body.to_s.include?('nothing to do')
-        @cache.update_service_config(service_config)
-        return true
-      else
-        raise RuntimeError, "Couldn't save configuration\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
-      end
+      @cache.update_service_config(service_config)
+      return true
     else
       raise RuntimeError, "Couldn't update service\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
     end
@@ -291,13 +271,8 @@ class Op5Manage
     response = @api.delete_config_service(service)
 
     if response.code.to_i == 200
-      response = @api.post_config_change
-      if response.code.to_i == 200
-        @cache.remove_service(service)
-        return true
-      else
-        raise RuntimeError, "Couldn't save configuration\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
-      end
+      @cache.remove_service(service)
+      return true
     else
       raise RuntimeError, "Couldn't remove service\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
     end
@@ -348,6 +323,31 @@ class Op5Manage
 
     # service_config and comp_config equal.
     return true
+  end
+
+
+
+  # -------------------------------
+  # Configuration changes
+  # -------------------------------
+
+  def config_change(action)
+
+    case action
+      when 'save'
+        response = @api.post_config_change
+      when 'remove'
+        response = @api.delete_config_change
+      else
+        raise "Unknown action #{action}"
+    end
+
+    body = response.body.to_s
+    if response.code.to_i == 200 or body.include?('nothing to do') or body.include?('Changes reverted')
+      return true
+    else
+      raise RuntimeError, "Couldn't #{action} configuration change\nCode: #{response.code.to_i}\nBody: #{response.body.to_s}"
+    end
   end
 
 end

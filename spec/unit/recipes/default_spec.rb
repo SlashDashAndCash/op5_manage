@@ -1,8 +1,5 @@
-#
 # Cookbook Name:: op5_manage
 # Spec:: default
-#
-# Copyright (c) 2016 The Authors, All Rights Reserved.
 
 require 'spec_helper'
 

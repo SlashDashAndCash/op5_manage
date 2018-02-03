@@ -333,6 +333,17 @@ class Op5Cache
       @cache['hosts'][host_index]['timestamp'] = now
       @cache['hosts'][host_index]['created'] = false
 
+
+      # Remove depending services
+      @cache['services'].each do | cached_service |
+        service = cached_service['service']
+        service_of_host = service.split(';')
+
+        if service_of_host = hostname
+          remove_service(service)
+        end
+      end
+
       writefile
     end
   end
