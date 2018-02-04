@@ -120,3 +120,7 @@
 - Replaced array properties by hashes in all resources.
 - Moved initial_downtime attribute into node\['op5_manage'\]\['node'\].
 - Bugfix: don't schedule initial downtime if node was removed.
+
+# 1.0.1
+
+- README.md

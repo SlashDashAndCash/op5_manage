@@ -15,25 +15,6 @@ platforms:
   ### your platforms here ###
 
 suites:
-  - name: op5-default-<%= ENV['USER'] %>
-    run_list:
-      - recipe[op5_manage]
-    attributes: {
-      "role_default": {
-        "fqdn": "op5cheftest-01.mydomain.tld"
-      },
-      "op5_manage": {
-        "node": {
-          "services": {
-            "Test service 06": {
-              "check_command": "check_ssh_5",
-              "display_name": "Interval 15m - Notify 15m+2m"
-            }
-          }
-        }
-      }
-    }
-
   - name: op5_manage-<%= ENV['USER'] %>
     run_list:
       - recipe[op5_manage]

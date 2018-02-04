@@ -44,12 +44,13 @@ vim ./recipes/default.rb
 ```ruby
 # Endpoint configuration
 
-node.default['op5_manage']['endpoint'] = {
-  'url'          => 'https://192.168.211.10/api',
-  'tls_verify'   => false,
-  'vault_name'   => nil,
-  'change_delay' => 0
-}
+node.default['op5_manage']['endpoint'].merge! (
+  {
+    'url'          => 'https://192.168.211.10/api',
+    'tls_verify'   => false,
+    'vault_name'   => nil
+  }
+)
 
 node.run_state['endpoint_auth'] = {
     'user'        => 'administrator',
@@ -197,22 +198,24 @@ The node recipe is used to manage a node itself in op5. This is the common use c
 Use attributes to modify host parameters. Either in a recipe or in a role or environment (with JSON).
 
 ```ruby
-default['op5_manage']['node'] = {
-  'hostgroups'              => { 'Web servers https' => true },
-  'custom_variable'         => {
-    '_API_PING_TXT'         => 'OK',
-    '_API_PING_URL'         => '/artifactory/api/system/ping'
-  },
-  'services' => {
-    'HTTPS URL API Ping' => {
-      'template'            => 'alarm-template_business_processes',
-      'check_command'       => 'check_https_url_string',
-      'check_command_args'  => '"$_API_PING_URL$"!"$_API_PING_TXT$"',
-      'notes_url'           => 'https://intranet.mydomain.tld/Monitoring#Checks-HTTPSURL',
-      'action_url'          => 'https://$HOSTADDRESS$$_API_PING_URL$'
+node.default['op5_manage']['node'].merge! (
+  {
+    'hostgroups'              => { 'Web servers https' => true },
+    'custom_variable'         => {
+      '_API_PING_TXT'         => 'OK',
+      '_API_PING_URL'         => '/artifactory/api/system/ping'
+    },
+    'services' => {
+      'HTTPS URL API Ping'    => {
+        'template'            => 'default-service',
+        'check_command'       => 'check_https_url_string',
+        'check_command_args'  => '"$_API_PING_URL$"!"$_API_PING_TXT$"',
+        'notes_url'           => 'https://intranet.mydomain.tld/Monitoring#Checks-HTTPSURL',
+        'action_url'          => 'https://$HOSTADDRESS$$_API_PING_URL$'
+      }
     }
   }
-}
+)
 
 include_recipe 'op5_manage'
 ```
@@ -228,7 +231,7 @@ include_recipe 'op5_manage'
       },
       "services": {
         "HTTPS URL API Ping": {
-          "template":           "alarm-template_business_processes",
+          "template":           "default-service",
           "check_command":      "check_https_url_string",
           "check_command_args": "\"$_API_PING_URL$\"!\"$_API_PING_TXT$\"",
           "notes_url":          "https://intranet.mydomain.tld/Monitoring#Checks-HTTPS",
@@ -268,23 +271,25 @@ The host recipe is used to manage hosts which are unable to run Chef client, lik
 Use attributes to `:create` or `:remove` hosts. Either in a recipe or in a role (with JSON).
 
 ```ruby
-default['op5_manage']['hosts'] = {
-  'op5cheftest-02.mydomain.tld' => {
-    'alias_name'    => 'op5cheftest-02',
-    'address'       => '192.168.211.27',
-    'template'      => 'default-host-template',
-    'hostgroups'    => { 'Generic hosts' => false, 'Linux servers' => true, 'Web servers https' => true },
-    'check_period'  => 'tp_class_a',
-    'retain_info'   => true
-  },
-  'op5cheftest-03.mydomain.tld' => {
-    'alias_name'    => 'op5cheftest-03',
-    'address'       => '192.168.211.21',
-    'template'      => 'default-host-template',
-    'hostgroups'    => { 'Generic hosts' => true, 'Linux servers' => true },
-    'action'        => 'remove'
+node.default['op5_manage']['hosts'].merge! (
+  {
+    'op5cheftest-02.mydomain.tld' => {
+      'alias_name'    => 'op5cheftest-02',
+      'address'       => '192.168.211.27',
+      'template'      => 'default-host-template',
+      'hostgroups'    => { 'Generic hosts' => false, 'Linux servers' => true, 'Web servers https' => true },
+      'check_period'  => 'workhours',
+      'retain_info'   => true
+    },
+    'op5cheftest-03.mydomain.tld' => {
+      'alias_name'    => 'op5cheftest-03',
+      'address'       => '192.168.211.21',
+      'template'      => 'default-host-template',
+      'hostgroups'    => { 'Generic hosts' => true, 'Linux servers' => true },
+      'action'        => 'remove'
+    }
   }
-}
+)
 
 include_recipe 'op5_manage::host'
 ```
@@ -298,7 +303,7 @@ include_recipe 'op5_manage::host'
         "address":      "192.168.211.27",
         "template":     "default-host-template",
         "hostgroups":   { "Generic hosts": false, "Linux servers": true, "Web servers https": false },
-        "check_period": "tp_class_a",
+        "check_period": "workhours",
         "retain_info":  true
       },
       "op5cheftest-03.mydomain.tld": {
@@ -329,17 +334,19 @@ The service recipe is used to manage services on hosts which are unable to run C
 Use attributes to `:create` or `:remove` services. Either in a recipe or in a role (with JSON).
 
 ```ruby
-default['op5_manage']['services'] = {
-  'op5cheftest-03.mydomain.tld;Test service 04' => {
-    'check_command'  => 'check_ssh_5',
-    'template'       => 'default-service',
-    'display_name'   => 'Interval 15m - Notify 15m+2m'
-  },
-  'op5cheftest-03.mydomain.tld;Test service 05' => {
-    'check_command'  => 'check_ssh_5',
-    'action'         => 'remove'
+node.default['op5_manage']['services'].merge! (
+  {
+    'op5cheftest-02.mydomain.tld;Test service 04' => {
+      'check_command'  => 'check_ssh_5',
+      'template'       => 'default-service',
+      'display_name'   => 'Interval 15m - Notify 15m+2m'
+    },
+    'op5cheftest-02.mydomain.tld;Test service 05' => {
+      'check_command'  => 'check_ssh_5',
+      'action'         => 'remove'
+    }
   }
-}
+)
 
 include_recipe 'op5_manage::service'
 ```
@@ -348,12 +355,12 @@ include_recipe 'op5_manage::service'
 {
   "op5_manage": {
     "services": {
-      "op5cheftest-03.mydomain.tld;Test service 04": {
+      "op5cheftest-02.mydomain.tld;Test service 04": {
         "check_command":  "check_ssh_5",
         "template":       "default-service",
         "display_name":   "Interval 15m - Notify 15m+2m"
       },
-      "op5cheftest-03.mydomain.tld;Test service 05": {
+      "op5cheftest-02.mydomain.tld;Test service 05": {
         "check_command":  "check_ssh_5",
         "action":         "remove"
       }
@@ -382,18 +389,20 @@ The host_downtime recipe schedules various kinds of host downtimes. Please refer
 Downtimes are defined by attributes.
 
 ```ruby
-default['op5_manage']['host_downtimes'] = {
-  'maintenance_op5cheftest-01.mydomain.tld' => {
-    'command'     => 'SCHEDULE_HOST_DOWNTIME',
-    'host_name'   => 'op5cheftest-01.mydomain.tld',
-    'start_time'  => '31.01.2018 23:00',
-    'end_time'    => '2018-01-31 23:10',
-    'fixed'       => true,
-    'duration'    => 0,
-    'trigger_id'  => 0,
-    'comment'     => 'Maintenance downtime for op5cheftest-01.mydomain.tld'
+node.default['op5_manage']['host_downtimes'].merge! (
+  {
+    'maintenance_op5cheftest-02.mydomain.tld' => {
+      'command'     => 'SCHEDULE_HOST_DOWNTIME',
+      'host_name'   => 'op5cheftest-02.mydomain.tld',
+      'start_time'  => '31.01.2018 23:00',
+      'end_time'    => '2018-01-31 23:10',
+      'fixed'       => true,
+      'duration'    => 0,
+      'trigger_id'  => 0,
+      'comment'     => 'Maintenance downtime for op5cheftest-02.mydomain.tld'
+    }
   }
-}
+)
 
 include_recipe 'op5_manage::host_downtime'
 ```
