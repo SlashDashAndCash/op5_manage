@@ -47,7 +47,7 @@ suites:
         "hosts": {
           "op5cheftest-02.mydomain.tld": {
             "alias_name": "op5cheftest-02",
-            "address": "192.168.211.27",
+            "address": "192.168.211.26",
             "template": "default-host-template",
             "hostgroups": {
               "Linux servers": false,

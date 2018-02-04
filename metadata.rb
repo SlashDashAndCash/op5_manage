@@ -17,4 +17,3 @@ supports 'suse',   '>= 11.0.0'
 chef_version       '>= 12.14.0'
 
 depends 'chef-vault'
-
