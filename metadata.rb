@@ -7,7 +7,7 @@ issues_url        'https://github.com/SlashDashAndCash/op5_manage/issues'
 description       'Manage op5 hosts and services'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 
-version '1.0.1'
+version '1.0.2'
 
 # Weired release numbers for supermarket
 supports 'centos', '>= 6.0.0'

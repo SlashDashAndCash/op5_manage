@@ -8,9 +8,10 @@ include_recipe 'op5_manage::vault_handler'
 # Set platform depending template and hostgroups.
 # Hostgroups defined by user have the higher precedence.
 if node['op5_manage']['node'].attribute?(node['platform'])
-  node.default['op5_manage']['node']['template']    = node['op5_manage']['node'][node['platform']]['template']
-  node.default['op5_manage']['node']['hostgroups']  = node['op5_manage']['node'][node['platform']]['hostgroups']
-  node.default['op5_manage']['node']['hostgroups'].merge!( node['op5_manage']['node']['hostgroups'] )
+  node.default['op5_manage']['node']['template'] = node['op5_manage']['node'][node['platform']]['template']
+  hostgroups = node['op5_manage']['node'][node['platform']]['hostgroups'].dup
+  hostgroups.merge!( node['op5_manage']['node']['hostgroups'].dup )
+  node.default['op5_manage']['node']['hostgroups'] = hostgroups
 else
   message  = "No settings for platform \"#{node['platform']}\" found. Please provide attributes like:\n"
   message += "{ \"op5_manage\": { \"node\": { \"#{node['platform']}\": { \"template\": \"mytemplate\", \"hostgroups\": [ \"myhostgroup\" ] } } } }"

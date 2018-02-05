@@ -125,3 +125,6 @@
 
 - README.md
 
+# 1.0.2
+
+ - Bugfix: hostgroups of node
